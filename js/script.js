@@ -5,7 +5,7 @@ const ORBIT_SPEED = 0.01; // Speed of orbital rotation (higher = faster orbit)
 
 const PROJECTS = [
     {
-        name: "Project Alpha",
+        name: "Project MineSweeper",
         color: "#ff006e",
         x: 300,
         y: 200,

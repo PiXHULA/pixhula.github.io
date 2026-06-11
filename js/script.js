@@ -60,7 +60,7 @@ const ctx = canvas.getContext('2d');
 let gameWidth = canvas.width = window.innerWidth;
 let gameHeight = canvas.height = window.innerHeight;
 
-const spaceship = {
+const SPACESHIP = {
     x: gameWidth / 2,
     y: gameHeight / 2,
     vx: 0,
@@ -99,13 +99,13 @@ function findNearestPlanet() {
     let minDist = Infinity;
 
     for (let planet of PROJECTS) {
-        const dx = planet.x - spaceship.x;
-        const dy = planet.y - spaceship.y;
+        const dx = planet.x - SPACESHIP.x;
+        const dy = planet.y - SPACESHIP.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < minDist) {
             minDist = dist;
-            nearest = { planet, distance: dist };
+            nearest = {planet, distance: dist};
         }
     }
 
@@ -116,24 +116,24 @@ function findNearestPlanet() {
 // INPUT HANDLING
 // ============================================
 function isAnyKeyPressed() {
-    return keys['W'] || keys['ARROWUP'] || 
-           keys['S'] || keys['ARROWDOWN'] || 
-           keys['A'] || keys['ARROWLEFT'] || 
-           keys['D'] || keys['ARROWRIGHT'];
+    return keys['W'] || keys['ARROWUP'] ||
+        keys['S'] || keys['ARROWDOWN'] ||
+        keys['A'] || keys['ARROWLEFT'] ||
+        keys['D'] || keys['ARROWRIGHT'];
 }
 
 window.addEventListener('keydown', (e) => {
     keys[e.key.toUpperCase()] = true;
 
     // Break orbit when any movement key is pressed
-    if (isAnyKeyPressed() && spaceship.docking) {
-        spaceship.docking = false;
-        spaceship.dockedPlanet = null;
+    if (isAnyKeyPressed() && SPACESHIP.docking) {
+        SPACESHIP.docking = false;
+        SPACESHIP.dockedPlanet = null;
     }
 
     if (e.key === 'Escape') {
-        spaceship.docking = false;
-        spaceship.dockedPlanet = null;
+        SPACESHIP.docking = false;
+        SPACESHIP.dockedPlanet = null;
     }
 });
 
@@ -153,74 +153,69 @@ function update() {
     // Check for auto-orbit: within range and no keys pressed
     const nearest = findNearestPlanet();
     const orbitRange = 150; // Distance to trigger auto-orbit (planet.radius + X)
-    
-    if (!spaceship.docking && nearest && nearest.distance < nearest.planet.radius + orbitRange && !isAnyKeyPressed()) {
+
+    if (!SPACESHIP.docking && nearest && nearest.distance < nearest.planet.radius + orbitRange && !isAnyKeyPressed()) {
         // Enter auto-orbit
-        spaceship.docking = true;
-        spaceship.dockedPlanet = nearest.planet;
+        SPACESHIP.docking = true;
+        SPACESHIP.dockedPlanet = nearest.planet;
     }
 
-    if (spaceship.docking && spaceship.dockedPlanet) {
+    if (SPACESHIP.docking && SPACESHIP.dockedPlanet) {
         // Orbital mechanics
-        const planet = spaceship.dockedPlanet;
-        const dx = planet.x - spaceship.x;
-        const dy = planet.y - spaceship.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        // Smoothly orbit the planet
+        const planet = SPACESHIP.dockedPlanet;
         const orbitRadius = planet.radius + 80;
-        const targetAngle = Math.atan2(dy, dx);
-        const perpX = Math.cos(targetAngle + Math.PI / 2);
-        const perpY = Math.sin(targetAngle + Math.PI / 2);
+        const currentAngle = Math.atan2(SPACESHIP.y - planet.y, SPACESHIP.x - planet.x);
+        const newAngle = currentAngle + ORBIT_SPEED;
 
-        spaceship.x = planet.x + Math.cos(targetAngle) * orbitRadius;
-        spaceship.y = planet.y + Math.sin(targetAngle) * orbitRadius;
-
-        spaceship.angle = targetAngle + Math.PI / 2;
-        spaceship.speed = 2;
-
-        // Auto-advance orbit angle
-        const angle = Math.atan2(spaceship.y - planet.y, spaceship.x - planet.x);
-        const newAngle = angle + ORBIT_SPEED;
-        spaceship.x = planet.x + Math.cos(newAngle) * orbitRadius;
-        spaceship.y = planet.y + Math.sin(newAngle) * orbitRadius;
+        SPACESHIP.x = planet.x + Math.cos(newAngle) * orbitRadius;
+        SPACESHIP.y = planet.y + Math.sin(newAngle) * orbitRadius;
+        SPACESHIP.angle = newAngle + Math.PI / 2;
+        SPACESHIP.speed = 2;
     } else {
         // Normal flight
         if (keys['W'] || keys['ARROWUP']) {
-            spaceship.vx += Math.cos(spaceship.angle) * 0.4;
-            spaceship.vy += Math.sin(spaceship.angle) * 0.4;
+            SPACESHIP.vx += Math.cos(SPACESHIP.angle) * 0.4;
+            SPACESHIP.vy += Math.sin(SPACESHIP.angle) * 0.4;
         }
         if (keys['S'] || keys['ARROWDOWN']) {
-            spaceship.vx -= Math.cos(spaceship.angle) * 0.3;
-            spaceship.vy -= Math.sin(spaceship.angle) * 0.3;
+            SPACESHIP.vx -= Math.cos(SPACESHIP.angle) * 0.3;
+            SPACESHIP.vy -= Math.sin(SPACESHIP.angle) * 0.3;
         }
         if (keys['A'] || keys['ARROWLEFT']) {
-            spaceship.angle -= spaceship.rotationSpeed;
+            SPACESHIP.angle -= SPACESHIP.rotationSpeed;
         }
         if (keys['D'] || keys['ARROWRIGHT']) {
-            spaceship.angle += spaceship.rotationSpeed;
+            SPACESHIP.angle += SPACESHIP.rotationSpeed;
         }
 
         // Apply friction
-        spaceship.vx *= spaceship.friction;
-        spaceship.vy *= spaceship.friction;
+        SPACESHIP.vx *= SPACESHIP.friction;
+        SPACESHIP.vy *= SPACESHIP.friction;
 
         // Cap speed
-        spaceship.speed = Math.sqrt(spaceship.vx * spaceship.vx + spaceship.vy * spaceship.vy);
-        if (spaceship.speed > spaceship.maxSpeed) {
-            spaceship.vx *= spaceship.maxSpeed / spaceship.speed;
-            spaceship.vy *= spaceship.maxSpeed / spaceship.speed;
+        SPACESHIP.speed = Math.sqrt(SPACESHIP.vx * SPACESHIP.vx + SPACESHIP.vy * SPACESHIP.vy);
+        if (SPACESHIP.speed > SPACESHIP.maxSpeed) {
+            SPACESHIP.vx *= SPACESHIP.maxSpeed / SPACESHIP.speed;
+            SPACESHIP.vy *= SPACESHIP.maxSpeed / SPACESHIP.speed;
         }
 
-        spaceship.x += spaceship.vx;
-        spaceship.y += spaceship.vy;
+        SPACESHIP.x += SPACESHIP.vx;
+        SPACESHIP.y += SPACESHIP.vy;
     }
 
     // Wrap around screen
-    if (spaceship.x < -50) spaceship.x = gameWidth + 50;
-    if (spaceship.x > gameWidth + 50) spaceship.x = -50;
-    if (spaceship.y < -50) spaceship.y = gameHeight + 50;
-    if (spaceship.y > gameHeight + 50) spaceship.y = -50;
+    if (SPACESHIP.x < -50) {
+        SPACESHIP.x = gameWidth + 50;
+    }
+    if (SPACESHIP.x > gameWidth + 50) {
+        SPACESHIP.x = -50;
+    }
+    if (SPACESHIP.y < -50) {
+        SPACESHIP.y = gameHeight + 50;
+    }
+    if (SPACESHIP.y > gameHeight + 50) {
+        SPACESHIP.y = -50;
+    }
 
     targetPlanet = findNearestPlanet();
 }
@@ -234,8 +229,8 @@ function drawStarfield() {
 
     for (let star of stars) {
         // Parallax effect
-        const offsetX = (spaceship.x * 0.1) % gameWidth;
-        const offsetY = (spaceship.y * 0.1) % gameHeight;
+        const offsetX = (SPACESHIP.x * 0.1) % gameWidth;
+        const offsetY = (SPACESHIP.y * 0.1) % gameHeight;
 
         ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * star.depth})`;
         ctx.fillRect(
@@ -269,7 +264,7 @@ function drawPlanets() {
 
         // Planet border
         ctx.strokeStyle = planet.color + 'ff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1;
         ctx.stroke();
 
         // Planet name
@@ -282,8 +277,8 @@ function drawPlanets() {
 
 function drawSpaceship() {
     ctx.save();
-    ctx.translate(spaceship.x, spaceship.y);
-    ctx.rotate(spaceship.angle);
+    ctx.translate(SPACESHIP.x, SPACESHIP.y);
+    ctx.rotate(SPACESHIP.angle);
 
     // Ship body
     ctx.fillStyle = '#00ff88';
@@ -296,12 +291,12 @@ function drawSpaceship() {
     ctx.fill();
 
     // Thruster glow
-    if (spaceship.speed > 0.5) {
+    if (SPACESHIP.speed > 0.5) {
         ctx.fillStyle = '#ff006e';
         ctx.beginPath();
         ctx.moveTo(-4, -4);
         ctx.lineTo(-4, 4);
-        ctx.lineTo(-12 - spaceship.speed * 2, 0);
+        ctx.lineTo(-12 - SPACESHIP.speed * 2, 0);
         ctx.closePath();
         ctx.fill();
 
@@ -310,7 +305,7 @@ function drawSpaceship() {
         ctx.beginPath();
         ctx.moveTo(-6, -2);
         ctx.lineTo(-6, 2);
-        ctx.lineTo(-8 - Math.random() * spaceship.speed * 2, 0);
+        ctx.lineTo(-8 - Math.random() * SPACESHIP.speed * 2, 0);
         ctx.closePath();
         ctx.fill();
     }
@@ -324,7 +319,7 @@ function drawDistanceLines() {
         ctx.setLineDash([5, 5]);
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(spaceship.x, spaceship.y);
+        ctx.moveTo(SPACESHIP.x, SPACESHIP.y);
         ctx.lineTo(targetPlanet.planet.x, targetPlanet.planet.y);
         ctx.stroke();
         ctx.setLineDash([]);
@@ -343,9 +338,9 @@ function draw() {
 // ============================================
 function updateUI() {
     // Info panel
-    document.getElementById('posX').textContent = Math.round(spaceship.x);
-    document.getElementById('posY').textContent = Math.round(spaceship.y);
-    document.getElementById('velDisplay').textContent = (spaceship.speed * 10).toFixed(0) + '%';
+    document.getElementById('posX').textContent = Math.round(SPACESHIP.x);
+    document.getElementById('posY').textContent = Math.round(SPACESHIP.y);
+    document.getElementById('velDisplay').textContent = (SPACESHIP.speed * 10).toFixed(0) + '%';
     document.getElementById('targetCount').textContent = PROJECTS.length;
 
     // Target panel
@@ -371,9 +366,9 @@ function updateUI() {
 
     // Orbiting indicator
     const orbitIndicator = document.getElementById('orbitingIndicator');
-    if (spaceship.docking) {
+    if (SPACESHIP.docking) {
         orbitIndicator.classList.add('orbiting');
-        document.getElementById('orbitingName').textContent = spaceship.dockedPlanet.name;
+        document.getElementById('orbitingName').textContent = SPACESHIP.dockedPlanet.name;
     } else {
         orbitIndicator.classList.remove('orbiting');
     }

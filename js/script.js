@@ -1,51 +1,126 @@
 // ============================================
 // CONFIGURATION - Customize your projects here
 // ============================================
-const ORBIT_SPEED = 0.01; // Speed of orbital rotation (higher = faster orbit)
+const SETTINGS = {
+    ORBIT: {
+        SPEED: 0.01,
+        AUTO_ORBIT_RANGE: 150,
+        ORBIT_RADIUS_OFFSET: 80,
+        DOCKED_SPEED: 2
+    },
+    WORLD: {
+        STAR_COUNT: 200,
+        STARFIELD_SCALE: 1.5,
+        STAR_DEPTH_BASE: 0.5,
+        STAR_DEPTH_VARIATION: 0.5,
+        STAR_SIZE_MAX: 1.5,
+        STAR_PARALLAX_SCALE: 0.1,
+        STAR_OPACITY: 0.3,
+        WRAP_MARGIN: 50
+    },
+    SHIP: {
+        START_VX: 0,
+        START_VY: 0,
+        START_ANGLE: 0,
+        START_SPEED: 0,
+        MAX_SPEED: 6,
+        FRICTION: 0.99,
+        ROTATION_SPEED: 0.1,
+        FORWARD_THRUST: 0.4,
+        REVERSE_THRUST: 0.3,
+        THRUSTER_VISIBLE_SPEED: 0.5,
+        SHIP_NOSE_X: 12,
+        SHIP_REAR_X: -8,
+        SHIP_MID_X: -4,
+        SHIP_TOP_Y: -8,
+        SHIP_BOTTOM_Y: 8,
+        THRUSTER_BASE_X: -4,
+        THRUSTER_BASE_Y: -4,
+        THRUSTER_TIP_X: -12,
+        THRUSTER_SPEED_MULTIPLIER: 2,
+        FLAME_BASE_X: -6,
+        FLAME_BASE_Y: -2,
+        FLAME_TIP_X: -8,
+        FLAME_SPEED_MULTIPLIER: 2
+    },
+    RENDER: {
+        ORIGIN_X: 0,
+        ORIGIN_Y: 0,
+        FULL_CIRCLE: Math.PI * 2,
+        HALF_CIRCLE: Math.PI / 2,
+        GRADIENT_STOP_START: 0,
+        GRADIENT_STOP_MIDDLE: 0.5,
+        GRADIENT_STOP_END: 1,
+        PLANET_GLOW_PADDING: 20,
+        PLANET_BORDER_WIDTH: 1,
+        PLANET_LABEL_OFFSET: 25,
+        PLANET_LABEL_FONT_SIZE: 12,
+        DISTANCE_LINE_WIDTH: 1,
+        DISTANCE_DASH_LENGTH: 5,
+        DISTANCE_DASH_GAP: 5,
+        STARFIELD_BACKGROUND: '#000'
+    },
+    UI: {
+        SPEED_DISPLAY_MULTIPLIER: 10,
+        TARGET_DISTANCE_MARGIN_TOP: 8,
+        TARGET_STATUS_MARGIN_TOP: 5,
+        TARGET_DESCRIPTION_MARGIN_TOP: 8,
+        TARGET_DESCRIPTION_FONT_SIZE: 9,
+        TARGET_FONT_SIZE: 10
+    }
+};
+
+const PROJECT_LAYOUT = {
+    MINE_SWEEPER: { X: 300, Y: 200, RADIUS: 35 },
+    BETA: { X: 800, Y: 300, RADIUS: 30 },
+    GAMMA: { X: 1200, Y: 400, RADIUS: 32 },
+    DELTA: { X: 600, Y: 700, RADIUS: 38 },
+    EPSILON: { X: 1100, Y: 800, RADIUS: 28 }
+};
 
 const PROJECTS = [
     {
         name: "Project MineSweeper",
         color: "#ff006e",
-        x: 300,
-        y: 200,
-        radius: 35,
+        x: PROJECT_LAYOUT.MINE_SWEEPER.X,
+        y: PROJECT_LAYOUT.MINE_SWEEPER.Y,
+        radius: PROJECT_LAYOUT.MINE_SWEEPER.RADIUS,
         description: "AI-powered analytics platform",
         link: "https://github.com"
     },
     {
         name: "Project Beta",
         color: "#00f5ff",
-        x: 800,
-        y: 300,
-        radius: 30,
+        x: PROJECT_LAYOUT.BETA.X,
+        y: PROJECT_LAYOUT.BETA.Y,
+        radius: PROJECT_LAYOUT.BETA.RADIUS,
         description: "Real-time collaboration tool",
         link: "https://github.com"
     },
     {
         name: "Project Gamma",
         color: "#ffbe0b",
-        x: 1200,
-        y: 400,
-        radius: 32,
+        x: PROJECT_LAYOUT.GAMMA.X,
+        y: PROJECT_LAYOUT.GAMMA.Y,
+        radius: PROJECT_LAYOUT.GAMMA.RADIUS,
         description: "Machine learning model registry",
         link: "https://github.com"
     },
     {
         name: "Project Delta",
         color: "#fb5607",
-        x: 600,
-        y: 700,
-        radius: 38,
+        x: PROJECT_LAYOUT.DELTA.X,
+        y: PROJECT_LAYOUT.DELTA.Y,
+        radius: PROJECT_LAYOUT.DELTA.RADIUS,
         description: "Distributed data pipeline",
         link: "https://github.com"
     },
     {
         name: "Project Epsilon",
         color: "#8338ec",
-        x: 1100,
-        y: 800,
-        radius: 28,
+        x: PROJECT_LAYOUT.EPSILON.X,
+        y: PROJECT_LAYOUT.EPSILON.Y,
+        radius: PROJECT_LAYOUT.EPSILON.RADIUS,
         description: "Neural network visualization",
         link: "https://github.com"
     }
@@ -63,14 +138,13 @@ let gameHeight = canvas.height = window.innerHeight;
 const SPACESHIP = {
     x: gameWidth / 2,
     y: gameHeight / 2,
-    vx: 0,
-    vy: 0,
-    angle: 0,
-    speed: 0,
-    maxSpeed: 6,
-    friction: 0.99,
-    rotationSpeed: 0.1,
-    size: 12,
+    vx: SETTINGS.SHIP.START_VX,
+    vy: SETTINGS.SHIP.START_VY,
+    angle: SETTINGS.SHIP.START_ANGLE,
+    speed: SETTINGS.SHIP.START_SPEED,
+    maxSpeed: SETTINGS.SHIP.MAX_SPEED,
+    friction: SETTINGS.SHIP.FRICTION,
+    rotationSpeed: SETTINGS.SHIP.ROTATION_SPEED,
     docking: false,
     dockedPlanet: null
 };
@@ -84,12 +158,12 @@ let targetPlanet = null;
 // ============================================
 function initStars() {
     stars = [];
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < SETTINGS.WORLD.STAR_COUNT; i++) {
         stars.push({
-            x: Math.random() * gameWidth * 1.5,
-            y: Math.random() * gameHeight * 1.5,
-            size: Math.random() * 1.5,
-            depth: Math.random() * 0.5 + 0.5
+            x: Math.random() * gameWidth * SETTINGS.WORLD.STARFIELD_SCALE,
+            y: Math.random() * gameHeight * SETTINGS.WORLD.STARFIELD_SCALE,
+            size: Math.random() * SETTINGS.WORLD.STAR_SIZE_MAX,
+            depth: Math.random() * SETTINGS.WORLD.STAR_DEPTH_VARIATION + SETTINGS.WORLD.STAR_DEPTH_BASE
         });
     }
 }
@@ -152,7 +226,7 @@ window.addEventListener('resize', () => {
 function update() {
     // Check for auto-orbit: within range and no keys pressed
     const nearest = findNearestPlanet();
-    const orbitRange = 150; // Distance to trigger auto-orbit (planet.radius + X)
+    const orbitRange = SETTINGS.ORBIT.AUTO_ORBIT_RANGE; // Distance to trigger auto-orbit (planet.radius + X)
 
     if (!SPACESHIP.docking && nearest && nearest.distance < nearest.planet.radius + orbitRange && !isAnyKeyPressed()) {
         // Enter auto-orbit
@@ -163,23 +237,23 @@ function update() {
     if (SPACESHIP.docking && SPACESHIP.dockedPlanet) {
         // Orbital mechanics
         const planet = SPACESHIP.dockedPlanet;
-        const orbitRadius = planet.radius + 80;
+        const orbitRadius = planet.radius + SETTINGS.ORBIT.ORBIT_RADIUS_OFFSET;
         const currentAngle = Math.atan2(SPACESHIP.y - planet.y, SPACESHIP.x - planet.x);
-        const newAngle = currentAngle + ORBIT_SPEED;
+        const newAngle = currentAngle + SETTINGS.ORBIT.SPEED;
 
         SPACESHIP.x = planet.x + Math.cos(newAngle) * orbitRadius;
         SPACESHIP.y = planet.y + Math.sin(newAngle) * orbitRadius;
-        SPACESHIP.angle = newAngle + Math.PI / 2;
-        SPACESHIP.speed = 2;
+        SPACESHIP.angle = newAngle + SETTINGS.RENDER.HALF_CIRCLE;
+        SPACESHIP.speed = SETTINGS.ORBIT.DOCKED_SPEED;
     } else {
         // Normal flight
         if (keys['W'] || keys['ARROWUP']) {
-            SPACESHIP.vx += Math.cos(SPACESHIP.angle) * 0.4;
-            SPACESHIP.vy += Math.sin(SPACESHIP.angle) * 0.4;
+            SPACESHIP.vx += Math.cos(SPACESHIP.angle) * SETTINGS.SHIP.FORWARD_THRUST;
+            SPACESHIP.vy += Math.sin(SPACESHIP.angle) * SETTINGS.SHIP.FORWARD_THRUST;
         }
         if (keys['S'] || keys['ARROWDOWN']) {
-            SPACESHIP.vx -= Math.cos(SPACESHIP.angle) * 0.3;
-            SPACESHIP.vy -= Math.sin(SPACESHIP.angle) * 0.3;
+            SPACESHIP.vx -= Math.cos(SPACESHIP.angle) * SETTINGS.SHIP.REVERSE_THRUST;
+            SPACESHIP.vy -= Math.sin(SPACESHIP.angle) * SETTINGS.SHIP.REVERSE_THRUST;
         }
         if (keys['A'] || keys['ARROWLEFT']) {
             SPACESHIP.angle -= SPACESHIP.rotationSpeed;
@@ -204,17 +278,17 @@ function update() {
     }
 
     // Wrap around screen
-    if (SPACESHIP.x < -50) {
-        SPACESHIP.x = gameWidth + 50;
+    if (SPACESHIP.x < -SETTINGS.WORLD.WRAP_MARGIN) {
+        SPACESHIP.x = gameWidth + SETTINGS.WORLD.WRAP_MARGIN;
     }
-    if (SPACESHIP.x > gameWidth + 50) {
-        SPACESHIP.x = -50;
+    if (SPACESHIP.x > gameWidth + SETTINGS.WORLD.WRAP_MARGIN) {
+        SPACESHIP.x = -SETTINGS.WORLD.WRAP_MARGIN;
     }
-    if (SPACESHIP.y < -50) {
-        SPACESHIP.y = gameHeight + 50;
+    if (SPACESHIP.y < -SETTINGS.WORLD.WRAP_MARGIN) {
+        SPACESHIP.y = gameHeight + SETTINGS.WORLD.WRAP_MARGIN;
     }
-    if (SPACESHIP.y > gameHeight + 50) {
-        SPACESHIP.y = -50;
+    if (SPACESHIP.y > gameHeight + SETTINGS.WORLD.WRAP_MARGIN) {
+        SPACESHIP.y = -SETTINGS.WORLD.WRAP_MARGIN;
     }
 
     targetPlanet = findNearestPlanet();
@@ -224,15 +298,15 @@ function update() {
 // RENDERING
 // ============================================
 function drawStarfield() {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, gameWidth, gameHeight);
+    ctx.fillStyle = SETTINGS.RENDER.STARFIELD_BACKGROUND;
+    ctx.fillRect(SETTINGS.RENDER.ORIGIN_X, SETTINGS.RENDER.ORIGIN_Y, gameWidth, gameHeight);
 
     for (let star of stars) {
         // Parallax effect
-        const offsetX = (SPACESHIP.x * 0.1) % gameWidth;
-        const offsetY = (SPACESHIP.y * 0.1) % gameHeight;
+        const offsetX = (SPACESHIP.x * SETTINGS.WORLD.STAR_PARALLAX_SCALE) % gameWidth;
+        const offsetY = (SPACESHIP.y * SETTINGS.WORLD.STAR_PARALLAX_SCALE) % gameHeight;
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * star.depth})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${SETTINGS.WORLD.STAR_OPACITY * star.depth})`;
         ctx.fillRect(
             (star.x - offsetX) % gameWidth,
             (star.y - offsetY) % gameHeight,
@@ -245,33 +319,33 @@ function drawStarfield() {
 function drawPlanets() {
     for (let planet of PROJECTS) {
         // Glow effect
-        const glowSize = planet.radius + 20;
+        const glowSize = planet.radius + SETTINGS.RENDER.PLANET_GLOW_PADDING;
         const gradient = ctx.createRadialGradient(planet.x, planet.y, planet.radius, planet.x, planet.y, glowSize);
-        gradient.addColorStop(0, planet.color);
-        gradient.addColorStop(0.5, planet.color + '80');
-        gradient.addColorStop(1, planet.color + '00');
+        gradient.addColorStop(SETTINGS.RENDER.GRADIENT_STOP_START, planet.color);
+        gradient.addColorStop(SETTINGS.RENDER.GRADIENT_STOP_MIDDLE, planet.color + '80');
+        gradient.addColorStop(SETTINGS.RENDER.GRADIENT_STOP_END, planet.color + '00');
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(planet.x, planet.y, glowSize, 0, Math.PI * 2);
+        ctx.arc(planet.x, planet.y, glowSize, SETTINGS.RENDER.ORIGIN_X, SETTINGS.RENDER.FULL_CIRCLE);
         ctx.fill();
 
         // Planet body
         ctx.fillStyle = planet.color;
         ctx.beginPath();
-        ctx.arc(planet.x, planet.y, planet.radius, 0, Math.PI * 2);
+        ctx.arc(planet.x, planet.y, planet.radius, SETTINGS.RENDER.ORIGIN_X, SETTINGS.RENDER.FULL_CIRCLE);
         ctx.fill();
 
         // Planet border
         ctx.strokeStyle = planet.color + 'ff';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = SETTINGS.RENDER.PLANET_BORDER_WIDTH;
         ctx.stroke();
 
         // Planet name
         ctx.fillStyle = planet.color;
-        ctx.font = 'bold 12px "Courier New"';
+        ctx.font = `bold ${SETTINGS.RENDER.PLANET_LABEL_FONT_SIZE}px "Courier New"`;
         ctx.textAlign = 'center';
-        ctx.fillText(planet.name, planet.x, planet.y + planet.radius + 25);
+        ctx.fillText(planet.name, planet.x, planet.y + planet.radius + SETTINGS.RENDER.PLANET_LABEL_OFFSET);
     }
 }
 
@@ -283,29 +357,29 @@ function drawSpaceship() {
     // Ship body
     ctx.fillStyle = '#00ff88';
     ctx.beginPath();
-    ctx.moveTo(12, 0);
-    ctx.lineTo(-8, -8);
-    ctx.lineTo(-4, 0);
-    ctx.lineTo(-8, 8);
+    ctx.moveTo(SETTINGS.SHIP.SHIP_NOSE_X, SETTINGS.RENDER.ORIGIN_Y);
+    ctx.lineTo(SETTINGS.SHIP.SHIP_REAR_X, SETTINGS.SHIP.SHIP_TOP_Y);
+    ctx.lineTo(SETTINGS.SHIP.SHIP_MID_X, SETTINGS.RENDER.ORIGIN_Y);
+    ctx.lineTo(SETTINGS.SHIP.SHIP_REAR_X, SETTINGS.SHIP.SHIP_BOTTOM_Y);
     ctx.closePath();
     ctx.fill();
 
     // Thruster glow
-    if (SPACESHIP.speed > 0.5) {
+    if (SPACESHIP.speed > SETTINGS.SHIP.THRUSTER_VISIBLE_SPEED) {
         ctx.fillStyle = '#ff006e';
         ctx.beginPath();
-        ctx.moveTo(-4, -4);
-        ctx.lineTo(-4, 4);
-        ctx.lineTo(-12 - SPACESHIP.speed * 2, 0);
+        ctx.moveTo(SETTINGS.SHIP.THRUSTER_BASE_X, SETTINGS.SHIP.THRUSTER_BASE_Y);
+        ctx.lineTo(SETTINGS.SHIP.THRUSTER_BASE_X, -SETTINGS.SHIP.THRUSTER_BASE_Y);
+        ctx.lineTo(SETTINGS.SHIP.THRUSTER_TIP_X - SPACESHIP.speed * SETTINGS.SHIP.THRUSTER_SPEED_MULTIPLIER, SETTINGS.RENDER.ORIGIN_Y);
         ctx.closePath();
         ctx.fill();
 
         // Flame flicker
         ctx.fillStyle = '#ffbe0b';
         ctx.beginPath();
-        ctx.moveTo(-6, -2);
-        ctx.lineTo(-6, 2);
-        ctx.lineTo(-8 - Math.random() * SPACESHIP.speed * 2, 0);
+        ctx.moveTo(SETTINGS.SHIP.FLAME_BASE_X, SETTINGS.SHIP.FLAME_BASE_Y);
+        ctx.lineTo(SETTINGS.SHIP.FLAME_BASE_X, -SETTINGS.SHIP.FLAME_BASE_Y);
+        ctx.lineTo(SETTINGS.SHIP.FLAME_TIP_X - Math.random() * SPACESHIP.speed * SETTINGS.SHIP.FLAME_SPEED_MULTIPLIER, SETTINGS.RENDER.ORIGIN_Y);
         ctx.closePath();
         ctx.fill();
     }
@@ -316,8 +390,8 @@ function drawSpaceship() {
 function drawDistanceLines() {
     if (targetPlanet) {
         ctx.strokeStyle = 'rgba(0, 255, 136, 0.2)';
-        ctx.setLineDash([5, 5]);
-        ctx.lineWidth = 1;
+        ctx.setLineDash([SETTINGS.RENDER.DISTANCE_DASH_LENGTH, SETTINGS.RENDER.DISTANCE_DASH_GAP]);
+        ctx.lineWidth = SETTINGS.RENDER.DISTANCE_LINE_WIDTH;
         ctx.beginPath();
         ctx.moveTo(SPACESHIP.x, SPACESHIP.y);
         ctx.lineTo(targetPlanet.planet.x, targetPlanet.planet.y);
@@ -340,28 +414,43 @@ function updateUI() {
     // Info panel
     document.getElementById('posX').textContent = Math.round(SPACESHIP.x);
     document.getElementById('posY').textContent = Math.round(SPACESHIP.y);
-    document.getElementById('velDisplay').textContent = (SPACESHIP.speed * 10).toFixed(0) + '%';
+    document.getElementById('velDisplay').textContent = (SPACESHIP.speed * SETTINGS.UI.SPEED_DISPLAY_MULTIPLIER).toFixed(0) + '%';
     document.getElementById('targetCount').textContent = PROJECTS.length;
 
     // Target panel
     if (targetPlanet) {
         const planet = targetPlanet.planet;
         const distance = Math.round(targetPlanet.distance);
-        const orbitRange = 150;
+        const orbitRange = SETTINGS.ORBIT.AUTO_ORBIT_RANGE;
         const canAutoOrbit = distance < planet.radius + orbitRange;
 
         document.getElementById('targetInfo').innerHTML = `
-            <div style="color: ${planet.color}">◆ ${planet.name}</div>
-            <div style="margin-top: 8px; font-size: 10px;">
-                <div>Distance: ${distance}px</div>
-                <div style="margin-top: 5px; color: ${canAutoOrbit ? '#00ff88' : '#ff0055'}">
+            <div class="target-name">◆ ${planet.name}</div>
+            <div class="target-distance-block">
+                <div class="target-distance">Distance: ${distance}px</div>
+                <div class="target-status">
                     ${canAutoOrbit ? '✓ In orbit range' : '✗ Out of range'}
                 </div>
-                <div style="margin-top: 8px; font-size: 9px; color: #0f0;">
+                <div class="target-description">
                     ${planet.description}
                 </div>
             </div>
         `;
+
+        const targetInfo = document.getElementById('targetInfo');
+        const targetName = targetInfo.querySelector('.target-name');
+        const targetDistanceBlock = targetInfo.querySelector('.target-distance-block');
+        const targetStatus = targetInfo.querySelector('.target-status');
+        const targetDescription = targetInfo.querySelector('.target-description');
+
+        targetName.style.color = planet.color;
+        targetDistanceBlock.style.marginTop = `${SETTINGS.UI.TARGET_DISTANCE_MARGIN_TOP}px`;
+        targetDistanceBlock.style.fontSize = `${SETTINGS.UI.TARGET_FONT_SIZE}px`;
+        targetStatus.style.marginTop = `${SETTINGS.UI.TARGET_STATUS_MARGIN_TOP}px`;
+        targetStatus.style.color = canAutoOrbit ? '#00ff88' : '#ff0055';
+        targetDescription.style.marginTop = `${SETTINGS.UI.TARGET_DESCRIPTION_MARGIN_TOP}px`;
+        targetDescription.style.fontSize = `${SETTINGS.UI.TARGET_DESCRIPTION_FONT_SIZE}px`;
+        targetDescription.style.color = '#0f0';
     }
 
     // Orbiting indicator

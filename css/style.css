@@ -1,3 +1,23 @@
+:root {
+    --orbiting-panel-size: 260px;
+    --orbiting-panel-bottom: 20px;
+    --orbiting-panel-right: 20px;
+    --orbiting-panel-padding: 18px;
+    --orbiting-panel-border-width: 2px;
+    --orbiting-panel-border-radius: 14px;
+    --orbiting-panel-bg: rgba(0, 0, 0, 0.78);
+    --orbiting-panel-transition-duration: 0.3s;
+    --orbiting-panel-float-duration: 3.4s;
+    --orbiting-panel-pulse-duration: 1.8s;
+    --orbiting-panel-scale: 1.06;
+    --orbiting-panel-float-scale: 1.08;
+    --orbiting-panel-glow: 0 0 28px rgba(0, 255, 136, 0.45);
+    --orbiting-title-pulse-duration: 1s;
+    --orbiting-name-font-size: 18px;
+    --orbiting-instruction-font-size: 10px;
+    --orbiting-instruction-margin-top: 5px;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -105,18 +125,60 @@ a:hover {
 
 #orbitingIndicator {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 200px;
+    bottom: var(--orbiting-panel-bottom);
+    right: var(--orbiting-panel-right);
+    width: var(--orbiting-panel-size);
+    height: var(--orbiting-panel-size);
+    padding: var(--orbiting-panel-padding);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     text-align: center;
     font-size: 14px;
     color: #00ff88;
     opacity: 0;
-    transition: opacity 0.3s;
+    background: var(--orbiting-panel-bg);
+    border: var(--orbiting-panel-border-width) solid #00ff88;
+    border-radius: var(--orbiting-panel-border-radius);
+    transform: translateY(14px) scale(0.92);
+    transform-origin: center;
+    transition: opacity var(--orbiting-panel-transition-duration), transform var(--orbiting-panel-transition-duration), box-shadow var(--orbiting-panel-transition-duration);
+    box-shadow: none;
+    overflow: hidden;
+}
+
+#orbitingIndicator::before {
+    content: '';
+    position: absolute;
+    inset: 12px;
+    border: 1px solid rgba(0, 255, 136, 0.18);
+    border-radius: inherit;
+    pointer-events: none;
+    animation: orbitingPulse var(--orbiting-panel-pulse-duration) ease-in-out infinite;
+}
+
+#orbitingIndicator > * {
+    position: relative;
+    z-index: 1;
 }
 
 .orbiting {
     opacity: 1 !important;
+    box-shadow: var(--orbiting-panel-glow);
+    animation: orbitingFloat var(--orbiting-panel-float-duration) ease-in-out infinite;
+}
+
+#orbitingIndicator #orbitingName {
+    font-size: var(--orbiting-name-font-size);
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+#orbitingIndicator .instruction {
+    font-size: var(--orbiting-instruction-font-size);
+    margin-top: var(--orbiting-instruction-margin-top);
 }
 
 @keyframes pulse {
@@ -125,5 +187,27 @@ a:hover {
 }
 
 .pulse {
-    animation: pulse 1s infinite;
+    animation: pulse var(--orbiting-title-pulse-duration) infinite;
+}
+
+@keyframes orbitingFloat {
+    0%, 100% {
+        transform: translateY(0) scale(var(--orbiting-panel-scale));
+    }
+
+    50% {
+        transform: translateY(-6px) scale(var(--orbiting-panel-float-scale));
+    }
+}
+
+@keyframes orbitingPulse {
+    0%, 100% {
+        opacity: 0.35;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.75;
+        transform: scale(1.04);
+    }
 }

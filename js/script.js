@@ -360,17 +360,22 @@ function initColorPicker() {
 
 function pickColor(event) {
     const wheelCanvas = document.getElementById('colorWheel');
+    const wheelContext = wheelCanvas.getContext('2d');
+    const colorPreview = document.getElementById('colorPreview');
     const canvasBounds = wheelCanvas.getBoundingClientRect();
     const clickX = event.clientX - canvasBounds.left;
     const clickY = event.clientY - canvasBounds.top;
-    const distanceFromCenterX = clickX - centerX;
-    const distanceFromCenterY = clickY - centerY;
+    const wheelRadius = wheelCanvas.width / 2;
+    const wheelCenterX = wheelRadius;
+    const wheelCenterY = wheelRadius;
+    const distanceFromCenterX = clickX - wheelCenterX;
+    const distanceFromCenterY = clickY - wheelCenterY;
 
-    if (Math.sqrt(distanceFromCenterX * distanceFromCenterX + distanceFromCenterY * distanceFromCenterY) > radius) {
+    if (Math.sqrt(distanceFromCenterX * distanceFromCenterX + distanceFromCenterY * distanceFromCenterY) > wheelRadius) {
         return;
     }
 
-    const pixelData = wheelCtx.getImageData(clickX, clickY, 1, 1).data;
+    const pixelData = wheelContext.getImageData(clickX, clickY, 1, 1).data;
     const hexColor = '#' + ((1 << 24) + (pixelData[0] << 16) + (pixelData[1] << 8) + pixelData[2]).toString(16).slice(1);
     colorPreview.style.backgroundColor = hexColor;
     setShipColor(hexColor);

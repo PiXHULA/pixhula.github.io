@@ -322,8 +322,13 @@ function updateUI() {
     if (SPACESHIP.docking) {
         orbitIndicator.classList.add('orbiting');
         document.getElementById('orbitingName').textContent = SPACESHIP.dockedPlanet.name;
+        const orbitLink = document.getElementById('orbitingLink');
+        orbitLink.href = SPACESHIP.dockedPlanet.link;
+        orbitLink.textContent = SPACESHIP.dockedPlanet.link;
+        orbitLink.style.display = 'inline';
     } else {
         orbitIndicator.classList.remove('orbiting');
+        document.getElementById('orbitingLink').style.display = 'none';
     }
 }
 

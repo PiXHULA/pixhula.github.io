@@ -16,6 +16,8 @@ export const SETTINGS = {
         WRAP_MARGIN: 50
     },
     SHIP: {
+        MODEL_SIZE: 15,
+        MODEL_COLOR: '#676767',
         START_VX: 0,
         START_VY: 0,
         START_ANGLE: 0,

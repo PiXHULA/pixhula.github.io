@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { SETTINGS } from './settings.js';
 
 const CAMERA_HEIGHT = 50;
 const CAMERA_FRUSTUM = 40;
@@ -34,7 +35,9 @@ export function initShipRenderer() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0x00ff88, 1.2);
+    const shipColor = new THREE.Color(SETTINGS.SHIP.MODEL_COLOR);
+
+    const directionalLight = new THREE.DirectionalLight(shipColor, 1.2);
     directionalLight.position.set(5, 10, 5);
     scene.add(directionalLight);
 
@@ -55,8 +58,16 @@ export function initShipRenderer() {
 
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 20 / maxDim;
+            const scale = SETTINGS.SHIP.MODEL_SIZE / maxDim;
             shipModel.scale.setScalar(scale);
+
+            // Apply ship color to all meshes
+            shipModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = child.material.clone();
+                    child.material.color.set(SETTINGS.SHIP.MODEL_COLOR);
+                }
+            });
 
             scene.add(shipModel);
         },
@@ -81,6 +92,23 @@ function onResize() {
     camera.updateProjectionMatrix();
 
     renderer.setSize(width, height);
+}
+
+export function setShipColor(hexColor) {
+    SETTINGS.SHIP.MODEL_COLOR = hexColor;
+    if (shipModel) {
+        shipModel.traverse((child) => {
+            if (child.isMesh) {
+                child.material.color.set(hexColor);
+            }
+        });
+    }
+    // Update directional light to match
+    scene.children.forEach((child) => {
+        if (child.isDirectionalLight && child.position.x === 5) {
+            child.color.set(hexColor);
+        }
+    });
 }
 
 export function updateShipRenderer(spaceship, gameWidth, gameHeight) {

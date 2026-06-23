@@ -82,44 +82,44 @@ export const PROJECTS = [
         x: PROJECT_LAYOUT.MINE_SWEEPER.X,
         y: PROJECT_LAYOUT.MINE_SWEEPER.Y,
         radius: PROJECT_LAYOUT.MINE_SWEEPER.RADIUS,
-        description: "AI-powered analytics platform",
-        link: "https://github.com"
+        description: "MineSweeper game built in Rust",
+        link: "https://github.com/pixhula/"
     },
     {
-        name: "Project Beta",
+        name: "Project Rotating cube",
         color: "#00f5ff",
         x: PROJECT_LAYOUT.BETA.X,
         y: PROJECT_LAYOUT.BETA.Y,
         radius: PROJECT_LAYOUT.BETA.RADIUS,
-        description: "Real-time collaboration tool",
-        link: "https://github.com"
+        description: "A Graphic test using Piston2D",
+        link: "https://github.com/PiXHULA/rotating-cube"
     },
     {
-        name: "Project Gamma",
+        name: "Project Chip8-emulator",
         color: "#ffbe0b",
         x: PROJECT_LAYOUT.GAMMA.X,
         y: PROJECT_LAYOUT.GAMMA.Y,
         radius: PROJECT_LAYOUT.GAMMA.RADIUS,
-        description: "Machine learning model registry",
-        link: "https://github.com"
+        description: "Learning rust by creating an Emulator",
+        link: "https://github.com/PiXHULA/chip8-emulator"
     },
     {
-        name: "Project Delta",
+        name: "Project Moredots",
         color: "#fb5607",
         x: PROJECT_LAYOUT.DELTA.X,
         y: PROJECT_LAYOUT.DELTA.Y,
         radius: PROJECT_LAYOUT.DELTA.RADIUS,
-        description: "Distributed data pipeline",
-        link: "https://github.com"
+        description: "Mouse assisting",
+        link: "https://github.com/PiXHULA/moredots"
     },
     {
-        name: "Project Epsilon",
+        name: "Project Dice",
         color: "#8338ec",
         x: PROJECT_LAYOUT.EPSILON.X,
         y: PROJECT_LAYOUT.EPSILON.Y,
         radius: PROJECT_LAYOUT.EPSILON.RADIUS,
-        description: "Neural network visualization",
-        link: "https://github.com"
+        description: "Dice made in React native",
+        link: "https://github.com/PiXHULA/dice"
     }
 ];
 

@@ -96,12 +96,6 @@ canvas {
     border: 1px solid #00ff88;
 }
 
-.color-input-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .color-preview {
     width: 18px;
     height: 18px;
@@ -109,17 +103,6 @@ canvas {
     border-radius: 3px;
 }
 
-#colorInput {
-    width: 80px;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid #00ff88;
-    color: #00ff88;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    padding: 3px 6px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
 
 #targetPanel {
     top: 20px;

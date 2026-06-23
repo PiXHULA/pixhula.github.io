@@ -2,7 +2,7 @@
 // CONFIGURATION - Customize your projects here
 // ============================================
 import { SETTINGS, PROJECTS, createSpaceship } from './settings.js';
-import { initShipRenderer, updateShipRenderer } from './shipRenderer.js';
+import { initShipRenderer, updateShipRenderer, setShipColor } from './shipRenderer.js';
 
 // ============================================
 // GAME STATE
@@ -311,4 +311,90 @@ function gameLoop() {
 
 initStars();
 initShipRenderer();
+initColorPicker();
 gameLoop();
+
+// ============================================
+// COLOR PICKER
+// ============================================
+function initColorPicker() {
+    const wheelCanvas = document.getElementById('colorWheel');
+    const wheelContext = wheelCanvas.getContext('2d');
+    const colorPreview = document.getElementById('colorPreview');
+    const wheelRadius = wheelCanvas.width / 2;
+    const wheelCenterX = wheelRadius;
+    const wheelCenterY = wheelRadius;
+
+    colorPreview.style.backgroundColor = SETTINGS.SHIP.MODEL_COLOR;
+
+    // Draw the color wheel
+    for (let angleDegrees = 0; angleDegrees < 360; angleDegrees++) {
+        const arcStart = (angleDegrees - 1) * Math.PI / 180;
+        const arcEnd = (angleDegrees + 1) * Math.PI / 180;
+
+        for (let distanceFromCenter = 0; distanceFromCenter <= wheelRadius; distanceFromCenter++) {
+            const saturation = distanceFromCenter / wheelRadius;
+            const hue = angleDegrees;
+            const rgbColor = hslToRgb(hue / 360, saturation, 0.5);
+            wheelContext.fillStyle = `rgb(${rgbColor[0]}, ${rgbColor[1]}, ${rgbColor[2]})`;
+            wheelContext.beginPath();
+            wheelContext.arc(wheelCenterX, wheelCenterY, distanceFromCenter, arcStart, arcEnd);
+            wheelContext.arc(wheelCenterX, wheelCenterY, distanceFromCenter + 1, arcEnd, arcStart, true);
+            wheelContext.closePath();
+            wheelContext.fill();
+        }
+    }
+    
+    let isDragging = false;
+    wheelCanvas.addEventListener('mousedown', (event) => {
+        isDragging = true;
+        pickColor(event);
+    });
+    wheelCanvas.addEventListener('mousemove', (event) => {
+        if (isDragging) {
+            pickColor(event);
+        }
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+}
+
+function pickColor(event) {
+    const wheelCanvas = document.getElementById('colorWheel');
+    const canvasBounds = wheelCanvas.getBoundingClientRect();
+    const clickX = event.clientX - canvasBounds.left;
+    const clickY = event.clientY - canvasBounds.top;
+    const distanceFromCenterX = clickX - centerX;
+    const distanceFromCenterY = clickY - centerY;
+
+    if (Math.sqrt(distanceFromCenterX * distanceFromCenterX + distanceFromCenterY * distanceFromCenterY) > radius) {
+        return;
+    }
+
+    const pixelData = wheelCtx.getImageData(clickX, clickY, 1, 1).data;
+    const hexColor = '#' + ((1 << 24) + (pixelData[0] << 16) + (pixelData[1] << 8) + pixelData[2]).toString(16).slice(1);
+    colorPreview.style.backgroundColor = hexColor;
+    setShipColor(hexColor);
+}
+
+function hslToRgb(h, s, l) {
+    let r, g, b;
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+

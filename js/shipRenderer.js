@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { SETTINGS } from './settings.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {SETTINGS} from './settings.js';
 
 const CAMERA_HEIGHT = 50;
 const CAMERA_FRUSTUM = 40;

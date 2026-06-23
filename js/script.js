@@ -324,7 +324,7 @@ function updateUI() {
         document.getElementById('orbitingName').textContent = SPACESHIP.dockedPlanet.name;
         const orbitLink = document.getElementById('orbitingLink');
         orbitLink.href = SPACESHIP.dockedPlanet.link;
-        orbitLink.textContent = SPACESHIP.dockedPlanet.link;
+        orbitLink.textContent = 'REPOSITORY';
         orbitLink.style.display = 'inline';
     } else {
         orbitIndicator.classList.remove('orbiting');

@@ -5,11 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Odyssey Portfolio</title>
     <link rel="stylesheet" href="css/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        
+        <canvas id="shipCanvas"></canvas>
+
         <div id="infoPanel" class="ui-panel">
             <div class="panel-title">SPACESHIP STATUS</div>
             <div class="panel-content">

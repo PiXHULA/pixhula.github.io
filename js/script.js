@@ -2,6 +2,7 @@
 // CONFIGURATION - Customize your projects here
 // ============================================
 import { SETTINGS, PROJECTS, createSpaceship } from './settings.js';
+import { initShipRenderer, updateShipRenderer } from './shipRenderer.js';
 
 // ============================================
 // GAME STATE
@@ -214,41 +215,7 @@ function drawPlanets() {
 }
 
 function drawSpaceship() {
-    ctx.save();
-    ctx.translate(SPACESHIP.x, SPACESHIP.y);
-    ctx.rotate(SPACESHIP.angle);
-
-    // Ship body
-    ctx.fillStyle = '#00ff88';
-    ctx.beginPath();
-    ctx.moveTo(SETTINGS.SHIP.SHIP_NOSE_X, SETTINGS.RENDER.ORIGIN_Y);
-    ctx.lineTo(SETTINGS.SHIP.SHIP_REAR_X, SETTINGS.SHIP.SHIP_TOP_Y);
-    ctx.lineTo(SETTINGS.SHIP.SHIP_MID_X, SETTINGS.RENDER.ORIGIN_Y);
-    ctx.lineTo(SETTINGS.SHIP.SHIP_REAR_X, SETTINGS.SHIP.SHIP_BOTTOM_Y);
-    ctx.closePath();
-    ctx.fill();
-
-    // Thruster glow
-    if (SPACESHIP.speed > SETTINGS.SHIP.THRUSTER_VISIBLE_SPEED) {
-        ctx.fillStyle = '#ff006e';
-        ctx.beginPath();
-        ctx.moveTo(SETTINGS.SHIP.THRUSTER_BASE_X, SETTINGS.SHIP.THRUSTER_BASE_Y);
-        ctx.lineTo(SETTINGS.SHIP.THRUSTER_BASE_X, -SETTINGS.SHIP.THRUSTER_BASE_Y);
-        ctx.lineTo(SETTINGS.SHIP.THRUSTER_TIP_X - SPACESHIP.speed * SETTINGS.SHIP.THRUSTER_SPEED_MULTIPLIER, SETTINGS.RENDER.ORIGIN_Y);
-        ctx.closePath();
-        ctx.fill();
-
-        // Flame flicker
-        ctx.fillStyle = '#ffbe0b';
-        ctx.beginPath();
-        ctx.moveTo(SETTINGS.SHIP.FLAME_BASE_X, SETTINGS.SHIP.FLAME_BASE_Y);
-        ctx.lineTo(SETTINGS.SHIP.FLAME_BASE_X, -SETTINGS.SHIP.FLAME_BASE_Y);
-        ctx.lineTo(SETTINGS.SHIP.FLAME_TIP_X - Math.random() * SPACESHIP.speed * SETTINGS.SHIP.FLAME_SPEED_MULTIPLIER, SETTINGS.RENDER.ORIGIN_Y);
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    ctx.restore();
+    updateShipRenderer(SPACESHIP, gameWidth, gameHeight);
 }
 
 function drawDistanceLines() {
@@ -343,4 +310,5 @@ function gameLoop() {
 }
 
 initStars();
+initShipRenderer();
 gameLoop();

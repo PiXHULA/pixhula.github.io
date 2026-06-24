@@ -1,9 +1,25 @@
 export const SETTINGS = {
     ORBIT: {
-        SPEED: 0.01,
+        SPEED: 0.04,
         AUTO_ORBIT_RANGE: 150,
         ORBIT_RADIUS_OFFSET: 80,
-        DOCKED_SPEED: 2
+        DOCKED_SPEED: 5,
+        TRANSITION_SPEED: 0.06
+    },
+    SUN: {
+        RADIUS: 100,                   // Pixel radius of the sun body
+        GLOW_RADIUS_MULTIPLIER: 4,    // How far the corona extends (× radius)
+    },
+    PLANET_ORBITS: {
+        MIN_DISTANCE: 400,            // Extra px from sun edge to planet center
+        MAX_DISTANCE_FACTOR: 0.72,    // Fraction of half the smaller screen dimension
+        ANGLE_RANDOMNESS: 0.45,       // Max radian offset per sector (keeps planets spread)
+    },
+    GRAVITY: {
+        ENABLED: true,
+        STRENGTH: 0.004,       // Base gravitational constant — increase to pull harder
+        RANGE: 400,            // Max distance (px) at which gravity is felt
+        FALLOFF_POWER: 1.5,    // How fast gravity weakens with distance (1 = linear, 2 = inverse square)
     },
     WORLD: {
         STAR_COUNT: 200,
@@ -17,7 +33,7 @@ export const SETTINGS = {
     },
     SHIP: {
         MODEL_SIZE: 5,
-        MODEL_COLOR: '#676767',
+        MODEL_COLOR: '#272727',
         START_VX: 0,
         START_VY: 0,
         START_ANGLE: 0,

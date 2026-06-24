@@ -18,6 +18,9 @@ const keys = {};
 let stars = [];
 let targetPlanet = null;
 
+// Stores {angle, dist} per planet so positions scale cleanly on resize
+const planetOrbits = [];
+
 // ============================================
 // INITIALIZATION
 // ============================================
@@ -31,6 +34,37 @@ function initStars() {
             depth: Math.random() * SETTINGS.WORLD.STAR_DEPTH_VARIATION + SETTINGS.WORLD.STAR_DEPTH_BASE
         });
     }
+}
+
+// Randomise each planet's orbit angle and distance around the sun.
+// Called once at startup; positions are recomputed from these on every resize.
+function initPlanetOrbits() {
+    planetOrbits.length = 0;
+    const n = PROJECTS.length;
+    const sectorAngle = (Math.PI * 2) / n;
+    for (let i = 0; i < n; i++) {
+        const base = sectorAngle * i;
+        const offset = (Math.random() - 0.5) * 2 * SETTINGS.PLANET_ORBITS.ANGLE_RANDOMNESS;
+        const minDist = SETTINGS.SUN.RADIUS + SETTINGS.PLANET_ORBITS.MIN_DISTANCE;
+        const maxDist = Math.min(gameWidth, gameHeight) / 2 * SETTINGS.PLANET_ORBITS.MAX_DISTANCE_FACTOR;
+        const dist = minDist + Math.random() * Math.max(0, maxDist - minDist);
+        planetOrbits.push({ angle: base + offset, dist });
+    }
+    updatePlanetPositions();
+}
+
+// Recompute planet x/y from stored orbit data — call on every resize.
+function updatePlanetPositions() {
+    const sunX = gameWidth / 2;
+    const sunY = gameHeight / 2;
+    const minDist = SETTINGS.SUN.RADIUS + SETTINGS.PLANET_ORBITS.MIN_DISTANCE;
+    const maxDist = Math.min(gameWidth, gameHeight) / 2 * SETTINGS.PLANET_ORBITS.MAX_DISTANCE_FACTOR;
+    PROJECTS.forEach((planet, i) => {
+        const { angle, dist } = planetOrbits[i];
+        const clamped = Math.max(minDist, Math.min(dist, maxDist));
+        planet.x = sunX + Math.cos(angle) * clamped;
+        planet.y = sunY + Math.sin(angle) * clamped;
+    });
 }
 
 function findNearestPlanet() {
@@ -83,6 +117,7 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('resize', () => {
     gameWidth = canvas.width = window.innerWidth;
     gameHeight = canvas.height = window.innerHeight;
+    updatePlanetPositions();
 });
 
 // ============================================
@@ -100,15 +135,26 @@ function update() {
     }
 
     if (SPACESHIP.docking && SPACESHIP.dockedPlanet) {
-        // Orbital mechanics
+        // Orbital mechanics — lerp into orbit position so the ship glides in smoothly
         const planet = SPACESHIP.dockedPlanet;
         const orbitRadius = planet.radius + SETTINGS.ORBIT.ORBIT_RADIUS_OFFSET;
         const currentAngle = Math.atan2(SPACESHIP.y - planet.y, SPACESHIP.x - planet.x);
         const newAngle = currentAngle + SETTINGS.ORBIT.SPEED;
 
-        SPACESHIP.x = planet.x + Math.cos(newAngle) * orbitRadius;
-        SPACESHIP.y = planet.y + Math.sin(newAngle) * orbitRadius;
-        SPACESHIP.angle = newAngle + SETTINGS.RENDER.HALF_CIRCLE;
+        const targetX = planet.x + Math.cos(newAngle) * orbitRadius;
+        const targetY = planet.y + Math.sin(newAngle) * orbitRadius;
+        const t = SETTINGS.ORBIT.TRANSITION_SPEED;
+
+        SPACESHIP.x += (targetX - SPACESHIP.x) * t;
+        SPACESHIP.y += (targetY - SPACESHIP.y) * t;
+
+        // Lerp angle along the shortest arc to avoid snapping
+        const targetAngle = newAngle + SETTINGS.RENDER.HALF_CIRCLE;
+        let angleDiff = targetAngle - SPACESHIP.angle;
+        // Normalise diff to [-PI, PI] so we always rotate the short way
+        angleDiff = ((angleDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
+        SPACESHIP.angle += angleDiff * t;
+
         SPACESHIP.speed = SETTINGS.ORBIT.DOCKED_SPEED;
     } else {
         // Normal flight
@@ -125,6 +171,21 @@ function update() {
         }
         if (keys['D'] || keys['ARROWRIGHT']) {
             SPACESHIP.angle += SPACESHIP.rotationSpeed;
+        }
+
+        // Apply gravity from all planets
+        if (SETTINGS.GRAVITY.ENABLED) {
+            for (const planet of PROJECTS) {
+                const dx = planet.x - SPACESHIP.x;
+                const dy = planet.y - SPACESHIP.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < SETTINGS.GRAVITY.RANGE && dist > 1) {
+                    const force = SETTINGS.GRAVITY.STRENGTH *
+                        Math.pow(SETTINGS.GRAVITY.RANGE / dist, SETTINGS.GRAVITY.FALLOFF_POWER);
+                    SPACESHIP.vx += (dx / dist) * force;
+                    SPACESHIP.vy += (dy / dist) * force;
+                }
+            }
         }
 
         // Apply friction
@@ -181,6 +242,38 @@ function drawStarfield() {
     }
 }
 
+function drawSun() {
+    const sunX = gameWidth / 2;
+    const sunY = gameHeight / 2;
+    const r = SETTINGS.SUN.RADIUS;
+    const glowR = r * SETTINGS.SUN.GLOW_RADIUS_MULTIPLIER;
+
+    // Outer corona
+    const corona = ctx.createRadialGradient(sunX, sunY, r * 0.5, sunX, sunY, glowR);
+    corona.addColorStop(0,   'rgba(255, 220, 80,  0.55)');
+    corona.addColorStop(0.3, 'rgba(255, 140, 20,  0.25)');
+    corona.addColorStop(0.7, 'rgba(255,  80,  0,  0.08)');
+    corona.addColorStop(1,   'rgba(255,  50,  0,  0)');
+    ctx.fillStyle = corona;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sun body — off-center highlight for depth
+    const body = ctx.createRadialGradient(
+        sunX - r * 0.28, sunY - r * 0.28, r * 0.04,
+        sunX,            sunY,            r
+    );
+    body.addColorStop(0,   '#ffffff');
+    body.addColorStop(0.2, '#fff7bb');
+    body.addColorStop(0.55,'#ffcc00');
+    body.addColorStop(1,   '#ff7700');
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, r, 0, Math.PI * 2);
+    ctx.fill();
+}
+
 function drawPlanets() {
     for (let planet of PROJECTS) {
         // Glow effect
@@ -233,6 +326,7 @@ function drawDistanceLines() {
 
 function draw() {
     drawStarfield();
+    drawSun();
     drawPlanets();
     drawDistanceLines();
     drawSpaceship();
@@ -310,6 +404,7 @@ function gameLoop() {
 }
 
 initStars();
+initPlanetOrbits();
 initShipRenderer();
 initColorPicker();
 gameLoop();

@@ -13,8 +13,12 @@ const THRUSTER_OFFSETS = [
 
 let scene, camera, renderer, shipModel;
 let shipCanvas;
+let keyLight; // promoted to module scope so updateShipRenderer can move it
 let flameEmitters = [];
-let shipModelY = 0; // Y world offset from model centering — kept in sync on load
+let shipModelY = 0;
+
+// Height of the sun in 3D world space — lower = more side-lit, higher = more top-down.
+const SUN_3D_HEIGHT = 6;
 
 const _up      = new THREE.Vector3(0, 1, 0);
 const _rearDir = new THREE.Vector3();
@@ -79,8 +83,8 @@ function createFlames() {
  * Called every frame. Computes world position of each nozzle from the ship's
  * world position + rotation, then scales/fades flames by current speed.
  */
-function updateFlames(speed, maxSpeed, worldX, worldZ, shipRotY) {
-    const t = Math.min(speed / maxSpeed, 1.0);
+function updateFlames(speed, maxSpeed, worldX, worldZ, shipRotY, docking) {
+    const t = docking ? 0 : Math.min(speed / maxSpeed, 1.0);
     const flicker = 0.85 + Math.random() * 0.1;
 
     const cosR = Math.cos(shipRotY);
@@ -140,30 +144,33 @@ export function initShipRenderer() {
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
 
-    // Lighting
-    // Low ambient so shadows stay dark and contrast is high
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
+    // Lighting (r164 uses physical units — intensities must be high to compensate for π factor)
+    // Low ambient so shadow-side surfaces stay clearly darker than the lit side.
+    const ambientLight = new THREE.AmbientLight(0x223355, 0.8);
     scene.add(ambientLight);
 
-    // Primary key light — bright white from top-front-right, casts shadows
-    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    keyLight.position.set(8, 14, 6);
+    // Primary key light — position updated every frame to track ship-to-sun direction
+    keyLight = new THREE.DirectionalLight(0xfff5cc, 8.0);
+    keyLight.position.set(0, SUN_3D_HEIGHT, 0);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.width  = 2048;
     keyLight.shadow.mapSize.height = 2048;
-    keyLight.shadow.camera.near = 0.5;
-    keyLight.shadow.camera.far = 200;
-    keyLight.shadow.bias = -0.001;
+    // Frustum must cover the whole ship model (MODEL_SIZE = 15, give extra margin)
+    keyLight.shadow.camera.left   = -20;
+    keyLight.shadow.camera.right  =  20;
+    keyLight.shadow.camera.top    =  20;
+    keyLight.shadow.camera.bottom = -20;
+    keyLight.shadow.camera.near   = 0.1;
+    keyLight.shadow.camera.far    = 200;
+    keyLight.shadow.bias = -0.002;
     scene.add(keyLight);
+    scene.add(keyLight.target);
 
-    // Sun reflection rim light — warm golden from bottom-back, simulates sun bounce
-    const sunRimLight = new THREE.DirectionalLight(0xffb347, 1.4);
-    sunRimLight.position.set(-6, -4, -8);
-    scene.add(sunRimLight);
-
-    // Subtle cool fill to separate the ship from pure black on shadow side
-    const fillLight = new THREE.DirectionalLight(0x8ab4ff, 0.25);
+    // Cool blue fill — keeps shadow side from going fully black
+    const fillLight = new THREE.DirectionalLight(0x6699ff, 1.5);
     fillLight.position.set(-8, 4, 4);
     scene.add(fillLight);
 
@@ -183,13 +190,22 @@ export function initShipRenderer() {
             const scale = SETTINGS.SHIP.MODEL_SIZE / maxDim;
             shipModel.scale.setScalar(scale);
 
-            // Apply ship color to all meshes
             shipModel.traverse((child) => {
                 if (child.isMesh) {
+                    // Clone original material — preserves all textures, normal maps, UV data
                     child.material = child.material.clone();
                     child.material.userData.isCloned = true;
+
+                    // GLB models commonly export with metalness=1 + roughness=0, which needs
+                    // an environment map to look correct. Without one the surface goes black.
+                    // Override to a diffuse-friendly value so directional light shades it properly.
+                    if ('roughness' in child.material) child.material.roughness = 0.65;
+                    if ('metalness' in child.material) child.material.metalness = 0.0;
+
+                    // White tint = show original textures as-is; color picker can tint from here.
                     child.material.color.set(SETTINGS.SHIP.MODEL_COLOR);
-                    child.castShadow = true;
+
+                    child.castShadow    = true;
                     child.receiveShadow = true;
                 }
             });
@@ -261,6 +277,8 @@ export function setShipColor(hexColor) {
             if (!child.material.userData.isCloned) {
                 child.material = child.material.clone();
                 child.material.userData.isCloned = true;
+                if ('roughness' in child.material) child.material.roughness = 0.65;
+                if ('metalness' in child.material) child.material.metalness = 0.0;
             }
             child.material.color.set(hexColor);
         }
@@ -279,7 +297,28 @@ export function updateShipRenderer(spaceship, gameWidth, gameHeight) {
     shipModel.position.z = worldZ;
     shipModel.rotation.y = shipRotY;
 
-    updateFlames(spaceship.speed, spaceship.maxSpeed, worldX, worldZ, shipRotY);
+    // Point the key light so the side of the ship facing the sun is always lit,
+    // regardless of how far the ship is from the sun.
+    // Strategy: normalize the ship→sun direction and place the light at a FIXED
+    // offset from the ship in that direction + a fixed elevation.
+    // This keeps the lighting angle constant even when far from center.
+    const toDx = -worldX;          // direction from ship toward sun in XZ
+    const toDz = -worldZ;
+    const toDist = Math.sqrt(toDx * toDx + toDz * toDz) || 1;
+    const nx = toDx / toDist;      // unit vector pointing toward sun
+    const nz = toDz / toDist;
+    const LIGHT_REACH = 18;        // horizontal offset — raise = shallower angle, lower = steeper
+
+    keyLight.position.set(
+        worldX + nx * LIGHT_REACH,
+        SUN_3D_HEIGHT,
+        worldZ + nz * LIGHT_REACH
+    );
+    keyLight.target.position.set(worldX, 0, worldZ);
+    keyLight.target.updateMatrixWorld();
+    keyLight.shadow.camera.updateProjectionMatrix();
+
+    updateFlames(spaceship.speed, spaceship.maxSpeed, worldX, worldZ, shipRotY, spaceship.docking);
 
     renderer.render(scene, camera);
 }

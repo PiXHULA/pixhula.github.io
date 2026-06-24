@@ -321,11 +321,17 @@ function initColorPicker() {
     const wheelCanvas = document.getElementById('colorWheel');
     const wheelContext = wheelCanvas.getContext('2d');
     const colorPreview = document.getElementById('colorPreview');
+    const colorCursor = document.getElementById('colorCursor');
     const wheelRadius = wheelCanvas.width / 2;
     const wheelCenterX = wheelRadius;
     const wheelCenterY = wheelRadius;
 
     colorPreview.style.backgroundColor = SETTINGS.SHIP.MODEL_COLOR;
+    
+    // Initialize cursor to center
+    colorCursor.style.left = wheelCenterX + 'px';
+    colorCursor.style.top = wheelCenterY + 'px';
+    colorCursor.classList.add('active');
 
     // Draw the color wheel
     for (let angleDegrees = 0; angleDegrees < 360; angleDegrees++) {
@@ -362,6 +368,7 @@ function pickColor(event) {
     const wheelCanvas = document.getElementById('colorWheel');
     const wheelContext = wheelCanvas.getContext('2d');
     const colorPreview = document.getElementById('colorPreview');
+    const colorCursor = document.getElementById('colorCursor');
     const canvasBounds = wheelCanvas.getBoundingClientRect();
     const clickX = event.clientX - canvasBounds.left;
     const clickY = event.clientY - canvasBounds.top;
@@ -374,6 +381,11 @@ function pickColor(event) {
     if (Math.sqrt(distanceFromCenterX * distanceFromCenterX + distanceFromCenterY * distanceFromCenterY) > wheelRadius) {
         return;
     }
+
+    // Move cursor
+    colorCursor.style.left = clickX + 'px';
+    colorCursor.style.top = clickY + 'px';
+    colorCursor.classList.add('active');
 
     const pixelData = wheelContext.getImageData(clickX, clickY, 1, 1).data;
     const hexColor = '#' + ((1 << 24) + (pixelData[0] << 16) + (pixelData[1] << 8) + pixelData[2]).toString(16).slice(1);

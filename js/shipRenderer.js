@@ -32,13 +32,14 @@ export function initShipRenderer() {
     renderer.setClearColor(0x000000, 0);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
 
     const shipColor = new THREE.Color(SETTINGS.SHIP.MODEL_COLOR);
 
-    const directionalLight = new THREE.DirectionalLight(shipColor, 1.2);
-    directionalLight.position.set(5, 10, 5);
+    const directionalLight = new THREE.DirectionalLight(shipColor, 0.2);
+    // directionalLight.position.set(5, 10, 5);
+    directionalLight.position.set(0, 0, 0);
     scene.add(directionalLight);
 
     const rimLight = new THREE.DirectionalLight(0x00ffff, 0.4);
@@ -65,19 +66,41 @@ export function initShipRenderer() {
             shipModel.traverse((child) => {
                 if (child.isMesh) {
                     child.material = child.material.clone();
+                    child.material.userData.isCloned = true;
                     child.material.color.set(SETTINGS.SHIP.MODEL_COLOR);
                 }
             });
 
             scene.add(shipModel);
+            hideLoadingScreen();
         },
-        undefined,
+        (xhr) => {
+            if (xhr.lengthComputable) {
+                const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                updateLoadingProgress(percent);
+            }
+        },
         (error) => {
             console.warn('Could not load spaceship.glb:', error.message);
+            hideLoadingScreen();
         }
     );
 
     window.addEventListener('resize', onResize);
+}
+
+function updateLoadingProgress(percent) {
+    const bar = document.getElementById('loadingBar');
+    const text = document.getElementById('loadingPercent');
+    if (bar) bar.style.width = percent + '%';
+    if (text) text.textContent = percent + '%';
+}
+
+function hideLoadingScreen() {
+    const screen = document.getElementById('loadingScreen');
+    if (!screen) return;
+    screen.style.opacity = '0';
+    setTimeout(() => { screen.style.display = 'none'; }, 600);
 }
 
 function onResize() {
@@ -96,20 +119,26 @@ function onResize() {
 
 export function setShipColor(hexColor) {
     SETTINGS.SHIP.MODEL_COLOR = hexColor;
-    if (shipModel) {
-        const color = new THREE.Color(hexColor);
-        shipModel.traverse((child) => {
-            if (child.isMesh) {
-                child.material.color.copy(color);
-                child.material.needsUpdate = true;
-            }
-        });
+    
+    if (!shipModel) {
+        console.warn('Ship model not loaded yet');
+        return;
     }
+    
+    shipModel.traverse((child) => {
+        if (child.isMesh && child.material) {
+            if (!child.material.userData.isCloned) {
+                child.material = child.material.clone();
+                child.material.userData.isCloned = true;
+            }
+            child.material.color.set(hexColor);
+        }
+    });
+    
     // Update directional light to match
-    const lightColor = new THREE.Color(hexColor);
     scene.children.forEach((child) => {
         if (child.isDirectionalLight && child.position.x === 5) {
-            child.color.copy(lightColor);
+            child.color.set(hexColor);
         }
     });
 }

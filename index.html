@@ -15,6 +15,17 @@
     </script>
 </head>
 <body>
+    <div id="loadingScreen">
+        <div id="loadingContent">
+            <div id="loadingTitle">SPACE ODYSSEY</div>
+            <div id="loadingSubtitle">INITIALIZING SYSTEMS</div>
+            <div id="loadingBarContainer">
+                <div id="loadingBar"></div>
+            </div>
+            <div id="loadingPercent">0%</div>
+            <div id="loadingDots"><span>.</span><span>.</span><span>.</span></div>
+        </div>
+    </div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <canvas id="shipCanvas"></canvas>
@@ -48,7 +59,10 @@
             </div>
             <div class="panel-title" style="margin-top: 12px;">SHIP COLOR</div>
             <div class="panel-content color-picker-section">
-                <canvas id="colorWheel" width="120" height="120"></canvas>
+                <div style="position: relative;">
+                    <canvas id="colorWheel" width="120" height="120"></canvas>
+                    <div id="colorCursor"></div>
+                </div>
                 <span class="color-preview" id="colorPreview"></span>
             </div>
         </div>

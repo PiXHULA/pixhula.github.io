@@ -97,16 +97,19 @@ function onResize() {
 export function setShipColor(hexColor) {
     SETTINGS.SHIP.MODEL_COLOR = hexColor;
     if (shipModel) {
+        const color = new THREE.Color(hexColor);
         shipModel.traverse((child) => {
             if (child.isMesh) {
-                child.material.color.set(hexColor);
+                child.material.color.copy(color);
+                child.material.needsUpdate = true;
             }
         });
     }
     // Update directional light to match
+    const lightColor = new THREE.Color(hexColor);
     scene.children.forEach((child) => {
         if (child.isDirectionalLight && child.position.x === 5) {
-            child.color.set(hexColor);
+            child.color.copy(lightColor);
         }
     });
 }

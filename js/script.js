@@ -357,7 +357,7 @@ function initColorPicker() {
     });
     window.addEventListener('mouseup', () => { isDragging = false; });
 }
-
+//style="background-color: rgb(235, 197, 18);"
 function pickColor(event) {
     const wheelCanvas = document.getElementById('colorWheel');
     const wheelContext = wheelCanvas.getContext('2d');
